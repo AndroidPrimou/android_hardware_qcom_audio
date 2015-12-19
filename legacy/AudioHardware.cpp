@@ -482,11 +482,18 @@ static status_t updateDeviceInfo(int rx_device,int tx_device) {
                 if(rx_device == temp_ptr->dev_id && tx_device == temp_ptr->dev_id_tx)
                     break;
 
+                if(rx_device != cur_rx || tx_device != cur_tx){
+
+                    ALOGD("Device switch during voice call (RX, TX) = (%d, %d) -> (%d, %d)", DEV_ID(cur_rx), DEV_ID(cur_tx), DEV_ID(rx_device), DEV_ID(tx_device));
+                    // cleanup old route in kernel
+                    msm_route_voice(DEV_ID(cur_rx),DEV_ID(cur_tx), 0);
+
 #ifdef HTC_AUDIO
-                updateACDB(rx_device, tx_device, rx_acdb_id, tx_acdb_id);
+                    updateACDB(rx_device, tx_device, rx_acdb_id, tx_acdb_id);
 #endif
 
-                msm_route_voice(DEV_ID(rx_device),DEV_ID(tx_device),1);
+                    msm_route_voice(DEV_ID(rx_device),DEV_ID(tx_device),1);
+                }
 
                 // Temporary work around for Speaker mode. The driver is not
                 // supporting Speaker Rx and Handset Tx combo
@@ -1028,7 +1035,6 @@ status_t AudioHardware::setParameters(const String8& keyValuePairs)
     const char BT_NREC_KEY[] = "bt_headset_nrec";
     const char BT_NAME_KEY[] = "bt_headset_name";
     const char BT_NREC_VALUE_ON[] = "on";
-
 #ifdef HTC_AUDIO
     const char ACTIVE_AP[] = "active_ap";
     const char EFFECT_ENABLED[] = "sound_effect_enable";
@@ -1592,14 +1598,24 @@ static status_t do_route_audio_rpc(uint32_t device,
 
         // Ending voice call
         ALOGD("Ending Voice call");
+
+        // cleanup route in kernel
+        msm_route_voice(DEV_ID(cur_rx),DEV_ID(cur_tx), 0);
         msm_end_voice();
         deleteFromTable(VOICE_CALL);
+
+        enableDevice(cur_rx,0);
+        enableDevice(cur_tx,0);
+
+        if(new_rx_device != INVALID_DEVICE && new_tx_device != INVALID_DEVICE) {
+            enableDevice(new_rx_device,1);
+            enableDevice(new_tx_device,1);
 #ifdef HTC_AUDIO
         updateDeviceInfo(new_rx_device,new_tx_device, 0, 0);
 #else
         updateDeviceInfo(new_rx_device,new_tx_device);
 #endif
-        if(new_rx_device != INVALID_DEVICE && new_tx_device != INVALID_DEVICE) {
+
             cur_rx = new_rx_device;
             cur_tx = new_tx_device;
         }
@@ -2213,8 +2229,8 @@ status_t AudioHardware::doRouting(AudioStreamInMSM72xx *input, uint32_t outputDe
     }
 
     if (sndDevice != -1 && sndDevice != mCurSndDevice) {
-        ret = doAudioRouteOrMute(sndDevice);
         mCurSndDevice = sndDevice;
+        ret = doAudioRouteOrMute(sndDevice);
     }
 
     return ret;
@@ -3014,7 +3030,6 @@ status_t AudioHardware::AudioStreamInMSM72xx::set(
 
     if (!acoustic)
         return NO_ERROR;
-
 
     int (*msm72xx_set_audpre_params)(int, int);
     msm72xx_set_audpre_params = (int (*)(int, int))::dlsym(acoustic, "msm72xx_set_audpre_params");
