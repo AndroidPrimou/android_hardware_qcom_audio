@@ -2146,8 +2146,13 @@ status_t AudioHardware::doRouting(AudioStreamInMSM72xx *input, uint32_t outputDe
                 sndDevice = SND_DEVICE_NO_MIC_HEADSET;
             }
         } else if (outputDevices & AUDIO_DEVICE_OUT_WIRED_HEADSET) {
+#ifdef HTC_HEADSET_MIC_WORKAROUND
+            ALOGI("Routing audio to Wired Headset, but using the Handsets microphone (thank HTC for their stupid audio libs)\n");
+            sndDevice = SND_DEVICE_NO_MIC_HEADSET;
+#else
             ALOGI("Routing audio to Wired Headset\n");
             sndDevice = SND_DEVICE_HEADSET;
+#endif
             audProcess = (ADRC_ENABLE | EQ_ENABLE | RX_IIR_ENABLE | MBADRC_ENABLE);
         } else if (outputDevices & AUDIO_DEVICE_OUT_SPEAKER) {
             ALOGI("Routing audio to Speakerphone\n");
