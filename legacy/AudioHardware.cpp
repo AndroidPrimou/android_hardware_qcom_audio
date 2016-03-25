@@ -708,7 +708,6 @@ AudioHardware::AudioHardware() :
 #ifdef WITH_QCOM_CALIBRATION
         audcal_initialize();
 #endif
-        mInit = true;
 
 #ifdef HTC_AUDIO
     // HTC specific functions
@@ -805,6 +804,8 @@ AudioHardware::AudioHardware() :
         ALOGV("BT name %s (tx,rx)=(%d,%d)", mBTEndpoints[i].name, mBTEndpoints[i].tx, mBTEndpoints[i].rx);
     }
 #endif
+
+    mInit = true;
 }
 
 AudioHardware::~AudioHardware()
@@ -1243,6 +1244,7 @@ status_t AudioHardware::setVoiceVolume(float v)
         return -1;
     }
     ALOGV("msm_set_voice_rx_vol(%d) succeeded",vol);
+
     return NO_ERROR;
 }
 
