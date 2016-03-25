@@ -78,29 +78,4 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 include $(BUILD_SHARED_LIBRARY)
 
-ifeq ($(USE_LEGACY_AUDIO_POLICY), 1)
-include $(CLEAR_VARS)
-
-LOCAL_CFLAGS += $(common_cflags)
-
-LOCAL_SRC_FILES := \
-    audio_policy_hal.cpp \
-    AudioPolicyManager.cpp
-
-LOCAL_MODULE := audio_policy.msm7x30
-
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_STATIC_LIBRARIES := \
-    libmedia_helper \
-    libaudiopolicy_legacy
-
-LOCAL_SHARED_LIBRARIES := \
-    libcutils \
-    libutils
-
-LOCAL_C_INCLUDES += hardware/libhardware_legacy/audio
-
-include $(BUILD_SHARED_LIBRARY)
-endif
+include $(LOCAL_PATH)/policy_hal/Android.mk
